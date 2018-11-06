@@ -268,7 +268,7 @@ pipeline {
                     echo "${globalError}"
                     if (globalError == notCaughtError){
                         // If there is no error code it means there had to be an error during creating contrail.
-                        // operationDestroy()
+                        operationDestroy()
                     }
                 }
             }
