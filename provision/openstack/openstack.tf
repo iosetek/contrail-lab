@@ -46,7 +46,7 @@ resource "openstack_blockstorage_volume_v2" "volume" {
 
 resource "openstack_compute_instance_v2" "basic" {
   name            = "${var.user_name}-${var.machine_name}"
-  image_id        = "703f5673-564d-40cf-b4f1-0134687809cc"
+  image_id        = "7977cc5c-3fa0-4f30-a834-d1a7353f4ac1"
   flavor_name     = "${var.flavor}"
   key_pair        = "${openstack_compute_keypair_v2.KeyPair.id}"
   security_groups = ["${openstack_compute_secgroup_v2.contrail_security_group.id}"]
@@ -81,7 +81,29 @@ resource "openstack_compute_floatingip_associate_v2" "floatip_1" {
     }
 
     inline = [
-      "sudo yum -y install kernel-devel kernel-headers ansible git",
+      "sudo easy_install pip==18.1",
+      "sudo yum remove -y --tolerant python2-pip python-yaml python-requests docker docker-common docker-selinux docker-engine",
+      "sudo pip uninstall -y docker docker-py docker-compose",
+      "sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo",
+      "sudo yum update -y",
+      "sudo yum -y install docker-ce git",
+      "sudo usermod -aG docker centos",
+      "sudo pip install ansible==2.4.2 PyYAML requests==2.12 docker-py docker-compose==1.9.0",
+    ]
+  }
+
+  provisioner "remote-exec" {
+    connection {
+      type        = "ssh"
+      user        = "centos"
+      password    = ""
+      agent       = "false"
+      host        = "${openstack_networking_floatingip_v2.floatip_1.address}"
+      private_key = "${file(var.ssh_private_key)}"
+      timeout     = "5m"
+    }
+
+    inline = [
       "git clone http://github.com/Juniper/contrail-ansible-deployer -b ${var.branch}",
       "git clone https://github.com/Juniper/contrail ${local.contrail_path}",
       "cd ${local.contrail_path}",
